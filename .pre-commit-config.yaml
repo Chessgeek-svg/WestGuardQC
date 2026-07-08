@@ -1,0 +1,45 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^backend/
+      - id: ruff-format
+        files: ^backend/
+
+  # Local hooks run against the project toolchains. Backend hooks expect the
+  # backend virtualenv to be active (or mypy on PATH); frontend hooks resolve
+  # binaries from frontend/node_modules via npx.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy (backend)
+        language: system
+        entry: bash -c 'cd backend && mypy app tests'
+        files: ^backend/.*\.py$
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint (frontend)
+        language: system
+        entry: bash -c 'cd frontend && npx eslint .'
+        files: ^frontend/
+        types_or: [ts, tsx, javascript]
+        pass_filenames: false
+
+      - id: prettier
+        name: prettier (frontend)
+        language: system
+        entry: bash -c 'cd frontend && npx prettier --check .'
+        files: ^frontend/
+        pass_filenames: false
