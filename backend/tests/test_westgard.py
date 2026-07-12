@@ -131,3 +131,55 @@ class TestInControl:
 
     def test_result_near_the_mean_with_unremarkable_history(self) -> None:
         assert run(0.5, history_offsets=[1.5, -1.0, 0.3]) == []
+
+
+class TestBoundaries:
+    """Limits are exclusive: a result exactly on a limit does not violate."""
+
+    def test_exactly_plus_2sd_is_in_control(self) -> None:
+        assert run(2.0) == []
+
+    def test_exactly_minus_2sd_is_in_control(self) -> None:
+        assert run(-2.0) == []
+
+    def test_exactly_3sd_is_only_a_1_2s_warning(self) -> None:
+        assert run(3.0) == [WestgardRule.RULE_1_2S]
+
+    def test_2_2s_needs_both_results_strictly_beyond_2sd(self) -> None:
+        assert WestgardRule.RULE_2_2S not in run(2.5, history_offsets=[2.0])
+
+    def test_r_4s_needs_both_excursions_strictly_beyond_2sd(self) -> None:
+        assert WestgardRule.RULE_R_4S not in run(-2.5, history_offsets=[2.0])
+
+    def test_result_exactly_on_the_mean_breaks_a_10x_run(self) -> None:
+        offsets = [0.5, 0.3, 0.6, 0.0, 0.7, 0.4, 0.5, 0.3, 0.6]
+        assert run(0.4, history_offsets=offsets) == []
+
+
+class TestInsufficientHistory:
+    def test_10x_needs_ten_results(self) -> None:
+        # Nine total, all above the mean.
+        assert run(0.4, history_offsets=[0.5] * 8) == []
+
+    def test_4_1s_needs_four_results(self) -> None:
+        assert run(1.3, history_offsets=[1.5, 1.2]) == []
+
+    def test_two_result_rules_do_not_fire_without_history(self) -> None:
+        assert run(2.5) == [WestgardRule.RULE_1_2S]
+        assert run(-3.5) == [WestgardRule.RULE_1_2S, WestgardRule.RULE_1_3S]
+
+
+class TestMixedViolations:
+    def test_extreme_swing_flags_both_magnitude_and_range_rules(self) -> None:
+        assert run(3.5, history_offsets=[-2.5]) == [
+            WestgardRule.RULE_1_2S,
+            WestgardRule.RULE_1_3S,
+            WestgardRule.RULE_R_4S,
+        ]
+
+    def test_systematic_shift_flags_2_2s_and_4_1s_together(self) -> None:
+        assert run(2.2, history_offsets=[1.5, 1.2, 2.3]) == [
+            WestgardRule.RULE_1_2S,
+            WestgardRule.RULE_2_2S,
+            WestgardRule.RULE_4_1S,
+        ]
