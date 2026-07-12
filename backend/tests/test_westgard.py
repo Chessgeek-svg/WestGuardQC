@@ -7,7 +7,7 @@ History is chronological, oldest first.
 
 import pytest
 
-from app.engine.westgard import WestgardRule, evaluate, evaluate_result
+from app.engine.westgard import WestgardRule, evaluate, evaluate_result, is_rejected, verdict
 from app.models import QCLot, QCResult
 
 MEAN = 100.0
@@ -183,3 +183,20 @@ class TestMixedViolations:
             WestgardRule.RULE_2_2S,
             WestgardRule.RULE_4_1S,
         ]
+
+
+class TestSeverity:
+    def test_1_2s_alone_is_a_warning_not_a_rejection(self) -> None:
+        assert is_rejected(["1-2s"]) is False
+        assert verdict(["1-2s"]) == "warning"
+
+    def test_any_rejection_rule_rejects(self) -> None:
+        assert is_rejected(["1-2s", "1-3s"]) is True
+        assert verdict(["1-2s", "1-3s"]) == "rejected"
+
+    def test_accepts_enum_members_and_raw_codes(self) -> None:
+        assert is_rejected([WestgardRule.RULE_2_2S]) is True
+
+    def test_empty_is_in_control_and_none_is_pending(self) -> None:
+        assert verdict([]) == "in_control"
+        assert verdict(None) == "pending"

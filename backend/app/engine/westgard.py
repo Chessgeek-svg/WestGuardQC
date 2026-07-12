@@ -14,8 +14,9 @@ Conventions used throughout:
 - Rules that need more history than is available simply do not fire.
 """
 
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from enum import StrEnum
+from typing import Literal
 
 from app.models import QCLot, QCResult
 
@@ -29,6 +30,46 @@ class WestgardRule(StrEnum):
     RULE_R_4S = "R-4s"
     RULE_4_1S = "4-1s"
     RULE_10X = "10x"
+
+
+# 1-2s is a warning that flags a run for closer review but does not by itself
+# reject it. Every other rule is a rejection.
+REJECTION_RULES: frozenset[WestgardRule] = frozenset(
+    {
+        WestgardRule.RULE_1_3S,
+        WestgardRule.RULE_2_2S,
+        WestgardRule.RULE_R_4S,
+        WestgardRule.RULE_4_1S,
+        WestgardRule.RULE_10X,
+    }
+)
+
+Verdict = Literal["pending", "in_control", "warning", "rejected"]
+
+
+def is_rejected(violations: Iterable[str]) -> bool:
+    """True if any violated rule is a rejection rule.
+
+    Accepts rule codes as plain strings or WestgardRule members, since
+    WestgardRule is a StrEnum and compares equal to its stored code.
+    """
+    return any(v in REJECTION_RULES for v in violations)
+
+
+def verdict(violations: Sequence[str] | None) -> Verdict:
+    """Classify a result from its violations for display and accept/reject.
+
+    None means the result was never evaluated. An empty list means evaluated
+    and in control. A non-empty list is a rejection if it contains any
+    rejection rule, otherwise a warning (1-2s only).
+    """
+    if violations is None:
+        return "pending"
+    if is_rejected(violations):
+        return "rejected"
+    if violations:
+        return "warning"
+    return "in_control"
 
 
 def evaluate(
