@@ -1,1 +1,29 @@
 @import 'tailwindcss';
+
+/* Dark theme by default. dark: variants respond to the .dark class on <html>
+   rather than the OS preference, so the app is consistently dark. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background-color: #0f172a; /* slate-900 */
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Levey-Jennings chart tokens, tuned for the dark surface. Status colors are
+   fixed so a verdict color never shifts meaning; they are brightened for
+   legibility against the dark chart surface. */
+:root {
+  --lj-surface: #1e293b; /* slate-800, matches the cards */
+  --lj-secondary: #cbd5e1; /* slate-300, trend line */
+  --lj-muted: #94a3b8; /* slate-400, axes and labels */
+  --lj-grid: #334155; /* slate-700 */
+  --lj-mean: #cbd5e1;
+  --lj-status-in_control: #22c55e;
+  --lj-status-warning: #fbbf24;
+  --lj-status-rejected: #ef4444;
+  --lj-status-pending: #94a3b8;
+}
