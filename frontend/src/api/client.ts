@@ -59,6 +59,12 @@ export function getLotResults(lotId: number, limit = 50): Promise<LotResults> {
   return apiGet<LotResults>(`/api/v1/qc-lots/${lotId}/results?limit=${limit}`)
 }
 
+export function getDashboard(analyteId?: number, limit = 30): Promise<LotResults[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (analyteId !== undefined) params.set('analyte_id', String(analyteId))
+  return apiGet<LotResults[]>(`/api/v1/dashboard?${params.toString()}`)
+}
+
 export function createResult(payload: QCResultCreate): Promise<QCResult> {
   return apiPost<QCResult>('/api/v1/qc-results', payload)
 }

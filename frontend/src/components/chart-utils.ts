@@ -1,5 +1,7 @@
 import type { QCResult, ResultStatus } from '../api/types'
 
+export { statusColor, statusLabel } from './status'
+
 export interface RefLine {
   key: string
   label: string
@@ -13,28 +15,6 @@ export interface ChartPoint {
   status: ResultStatus
   recordedAt: string
   violations: string[]
-}
-
-const STATUS_COLOR: Record<ResultStatus, string> = {
-  in_control: 'var(--lj-status-in_control)',
-  warning: 'var(--lj-status-warning)',
-  rejected: 'var(--lj-status-rejected)',
-  pending: 'var(--lj-status-pending)',
-}
-
-const STATUS_LABEL: Record<ResultStatus, string> = {
-  in_control: 'In control',
-  warning: 'Warning',
-  rejected: 'Rejected',
-  pending: 'Pending',
-}
-
-export function statusColor(status: ResultStatus): string {
-  return STATUS_COLOR[status]
-}
-
-export function statusLabel(status: ResultStatus): string {
-  return STATUS_LABEL[status]
 }
 
 /** Mean plus the +/-1, 2, 3 SD boundary lines, from the lot's target stats. */
