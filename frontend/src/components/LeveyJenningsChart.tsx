@@ -40,10 +40,26 @@ function formatTimestamp(iso: string): string {
   })
 }
 
-export function LeveyJenningsChart({ data }: { data: LotResults }) {
+interface LeveyJenningsChartProps {
+  data: LotResults
+  height?: number
+  showCaption?: boolean
+  showLegend?: boolean
+  sdBands?: 'all' | 'two'
+}
+
+export function LeveyJenningsChart({
+  data,
+  height = 380,
+  showCaption = true,
+  showLegend = true,
+  sdBands = 'all',
+}: LeveyJenningsChartProps) {
   const { target_mean: mean, target_sd: sd } = data
   const points = toChartPoints(data.results)
-  const lines = referenceLines(mean, sd)
+  const lines = referenceLines(mean, sd).filter(
+    (line) => sdBands === 'all' || line.kind === 'mean' || line.label.endsWith('2SD'),
+  )
   const domain = yDomain(
     mean,
     sd,
@@ -89,16 +105,18 @@ export function LeveyJenningsChart({ data }: { data: LotResults }) {
 
   return (
     <figure className="w-full">
-      <figcaption className="mb-2">
-        <h2 className="text-lg font-semibold">
-          {data.analyte_name} <span className="text-slate-500">— {data.level}</span>
-        </h2>
-        <p className="text-sm text-slate-500">
-          Target {mean} ± {sd} {data.unit}
-        </p>
-      </figcaption>
+      {showCaption && (
+        <figcaption className="mb-2">
+          <h2 className="text-lg font-semibold">
+            {data.analyte_name} <span className="text-slate-500">— {data.level}</span>
+          </h2>
+          <p className="text-sm text-slate-500">
+            Target {mean} ± {sd} {data.unit}
+          </p>
+        </figcaption>
+      )}
 
-      <div className="h-[380px] w-full">
+      <div className="w-full" style={{ height }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={points} margin={{ top: 8, right: 56, bottom: 8, left: 8 }}>
             <CartesianGrid stroke="var(--lj-grid)" strokeDasharray="3 3" />
@@ -140,17 +158,19 @@ export function LeveyJenningsChart({ data }: { data: LotResults }) {
         </ResponsiveContainer>
       </div>
 
-      <ul className="mt-3 flex flex-wrap gap-4 text-sm" aria-label="Result status legend">
-        {LEGEND_STATUSES.map((status) => (
-          <li key={status} className="flex items-center gap-2">
-            <span
-              className="inline-block h-3 w-3 rounded-full"
-              style={{ backgroundColor: statusColor(status) }}
-            />
-            {statusLabel(status)}
-          </li>
-        ))}
-      </ul>
+      {showLegend && (
+        <ul className="mt-3 flex flex-wrap gap-4 text-sm" aria-label="Result status legend">
+          {LEGEND_STATUSES.map((status) => (
+            <li key={status} className="flex items-center gap-2">
+              <span
+                className="inline-block h-3 w-3 rounded-full"
+                style={{ backgroundColor: statusColor(status) }}
+              />
+              {statusLabel(status)}
+            </li>
+          ))}
+        </ul>
+      )}
     </figure>
   )
 }
