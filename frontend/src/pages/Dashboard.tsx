@@ -27,10 +27,10 @@ export function Dashboard() {
     }
   }, [])
 
-  if (loading) return <p className="text-slate-500">Loading…</p>
-  if (error) return <p className="text-red-600">{error}</p>
+  if (loading) return <p className="text-slate-400">Loading…</p>
+  if (error) return <p className="text-red-400">{error}</p>
   if (bundles.length === 0) {
-    return <p className="text-slate-500">No active lots yet.</p>
+    return <p className="text-slate-400">No active lots yet.</p>
   }
 
   const analytes = [...new Set(bundles.map((b) => b.analyte_name))].sort()
@@ -46,7 +46,7 @@ export function Dashboard() {
           id="analyte-filter"
           value={analyte}
           onChange={(e) => setAnalyte(e.target.value)}
-          className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-800"
+          className="rounded border border-slate-600 bg-slate-800 px-3 py-1.5 text-sm"
         >
           <option value="all">All</option>
           {analytes.map((name) => (

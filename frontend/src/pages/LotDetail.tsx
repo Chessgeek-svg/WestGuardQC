@@ -34,12 +34,12 @@ export function LotDetail() {
 
   return (
     <div>
-      <Link to="/" className="text-sm text-slate-500 hover:underline">
+      <Link to="/" className="text-sm text-slate-400 hover:underline">
         ← Back to dashboard
       </Link>
 
-      {loading && <p className="mt-4 text-slate-500">Loading…</p>}
-      {error && <p className="mt-4 text-red-600">{error}</p>}
+      {loading && <p className="mt-4 text-slate-400">Loading…</p>}
+      {error && <p className="mt-4 text-red-400">{error}</p>}
 
       {data && (
         <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_20rem]">

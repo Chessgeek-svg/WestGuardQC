@@ -78,9 +78,9 @@ export function LeveyJenningsChart({
         <div>z = {zScore(point.value, mean, sd).toFixed(2)}</div>
         <div style={{ color: statusColor(point.status) }}>{statusLabel(point.status)}</div>
         {point.violations.length > 0 && (
-          <div className="text-slate-500">{point.violations.join(', ')}</div>
+          <div className="text-slate-400">{point.violations.join(', ')}</div>
         )}
-        <div className="text-slate-500">{formatTimestamp(point.recordedAt)}</div>
+        <div className="text-slate-400">{formatTimestamp(point.recordedAt)}</div>
       </div>
     )
   }
@@ -108,9 +108,9 @@ export function LeveyJenningsChart({
       {showCaption && (
         <figcaption className="mb-2">
           <h2 className="text-lg font-semibold">
-            {data.analyte_name} <span className="text-slate-500">— {data.level}</span>
+            {data.analyte_name} <span className="text-slate-400">— {data.level}</span>
           </h2>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-400">
             Target {mean} ± {sd} {data.unit}
           </p>
         </figcaption>

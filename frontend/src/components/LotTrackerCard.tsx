@@ -8,13 +8,13 @@ export function LotTrackerCard({ data }: { data: LotResults }) {
   return (
     <Link
       to={`/lots/${data.lot_id}`}
-      className="block rounded-lg border border-slate-200 p-4 transition-colors hover:border-slate-400 dark:border-slate-700 dark:hover:border-slate-500"
+      className="block rounded-lg border border-slate-700 bg-slate-800 p-4 transition-colors hover:border-slate-500"
     >
       <div className="mb-2">
         <h3 className="font-semibold">
-          {data.analyte_name} <span className="text-slate-500">— {data.level}</span>
+          {data.analyte_name} <span className="text-slate-400">— {data.level}</span>
         </h3>
-        <p className="text-xs text-slate-500">{data.unit}</p>
+        <p className="text-xs text-slate-400">{data.unit}</p>
       </div>
 
       {data.results.length > 0 ? (
@@ -26,7 +26,7 @@ export function LotTrackerCard({ data }: { data: LotResults }) {
           sdBands="two"
         />
       ) : (
-        <div className="flex h-[160px] items-center justify-center text-sm text-slate-500">
+        <div className="flex h-[160px] items-center justify-center text-sm text-slate-400">
           No results yet
         </div>
       )}

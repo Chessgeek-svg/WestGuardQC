@@ -19,9 +19,10 @@ describe('StatsSummary', () => {
     })
     render(<StatsSummary data={data} />)
     expect(screen.getByText('N = 2')).toBeInTheDocument()
-    // Observed mean 105 rendered (also equals the last-10 average here),
-    // shown against the target 100.
+    expect(screen.getByText('Observed')).toBeInTheDocument()
+    expect(screen.getByText('Target')).toBeInTheDocument()
+    // Observed mean 105 (also equals the last-10 average here), target mean 100.
     expect(screen.getAllByText(/105\.0/).length).toBeGreaterThan(0)
-    expect(screen.getByText(/\/ 100/)).toBeInTheDocument()
+    expect(screen.getByText('100')).toBeInTheDocument()
   })
 })

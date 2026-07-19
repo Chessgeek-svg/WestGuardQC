@@ -45,7 +45,7 @@ export function ResultEntryForm({ lotId, onCreated }: { lotId: number; onCreated
           required
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+          className="rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -55,7 +55,7 @@ export function ResultEntryForm({ lotId, onCreated }: { lotId: number; onCreated
           required
           value={recordedBy}
           onChange={(e) => setRecordedBy(e.target.value)}
-          className="rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+          className="rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
         />
       </label>
       <label className="flex flex-col gap-1 text-sm">
@@ -64,18 +64,18 @@ export function ResultEntryForm({ lotId, onCreated }: { lotId: number; onCreated
           type="datetime-local"
           value={recordedAt}
           onChange={(e) => setRecordedAt(e.target.value)}
-          className="rounded border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
+          className="rounded border border-slate-600 bg-slate-800 px-3 py-2 text-slate-100"
         />
       </label>
       <button
         type="submit"
         disabled={submitting}
-        className="rounded bg-slate-900 px-4 py-2 text-white disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900"
+        className="rounded bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50"
       >
         {submitting ? 'Recording…' : 'Record'}
       </button>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
       {lastResult && (
         <p className="text-sm" style={{ color: statusColor(lastResult.status) }}>
           Recorded {lastResult.value}: {statusLabel(lastResult.status)}
