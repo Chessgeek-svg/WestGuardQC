@@ -3,6 +3,11 @@
 #   make test VENV_PY=.venv/bin/python
 VENV_PY ?= .venv/Scripts/python.exe
 
+# The test fixtures drop and recreate every table, so they run against their own
+# database. Create it once with:
+#   docker compose exec db createdb -U westguard westguardqc_test
+TEST_DATABASE_URL ?= postgresql+asyncpg://westguard:westguard@localhost:5432/westguardqc_test
+
 .PHONY: help db migrate seed backend frontend test lint format
 
 help:
@@ -31,6 +36,7 @@ backend:
 frontend:
 	cd frontend && npm run dev
 
+test: export DATABASE_URL := $(TEST_DATABASE_URL)
 test:
 	cd backend && $(VENV_PY) -m pytest
 	cd frontend && npm test
