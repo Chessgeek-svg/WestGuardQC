@@ -3,7 +3,7 @@ import { cloneElement, type ReactElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
-import { makeBundle, makeResult } from '../test/fixtures'
+import { makeBundle, makeResult, makeVoided } from '../test/fixtures'
 import { LotTrackerCard } from './LotTrackerCard'
 
 vi.mock('recharts', async () => {
@@ -41,6 +41,40 @@ describe('LotTrackerCard', () => {
     render(
       <MemoryRouter>
         <LotTrackerCard data={makeBundle()} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText(/no results yet/i)).toBeInTheDocument()
+  })
+
+  it('shows the lot number, so two lots of the same level are distinguishable', () => {
+    render(
+      <MemoryRouter>
+        <LotTrackerCard data={makeBundle({ lot_number: 'GLU-2311' })} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('GLU-2311')).toBeInTheDocument()
+  })
+
+  it('badges a lot past its expiration date', () => {
+    const { rerender } = render(
+      <MemoryRouter>
+        <LotTrackerCard data={makeBundle({ expiration_date: '2099-01-01' })} />
+      </MemoryRouter>,
+    )
+    expect(screen.queryByText(/expired/i)).not.toBeInTheDocument()
+
+    rerender(
+      <MemoryRouter>
+        <LotTrackerCard data={makeBundle({ expiration_date: '2020-01-01' })} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText(/expired/i)).toBeInTheDocument()
+  })
+
+  it('treats an all-voided lot as having nothing to plot', () => {
+    render(
+      <MemoryRouter>
+        <LotTrackerCard data={makeBundle({ results: [makeVoided({ id: 1 })] })} />
       </MemoryRouter>,
     )
     expect(screen.getByText(/no results yet/i)).toBeInTheDocument()

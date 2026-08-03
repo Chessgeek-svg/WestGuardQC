@@ -5,6 +5,7 @@ const STATUS_COLOR: Record<ResultStatus, string> = {
   warning: 'var(--lj-status-warning)',
   rejected: 'var(--lj-status-rejected)',
   pending: 'var(--lj-status-pending)',
+  voided: 'var(--lj-status-voided)',
 }
 
 const STATUS_LABEL: Record<ResultStatus, string> = {
@@ -12,6 +13,7 @@ const STATUS_LABEL: Record<ResultStatus, string> = {
   warning: 'Warning',
   rejected: 'Rejected',
   pending: 'Pending',
+  voided: 'Voided',
 }
 
 export function statusColor(status: ResultStatus): string {

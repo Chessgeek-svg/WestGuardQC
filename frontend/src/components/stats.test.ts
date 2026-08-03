@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { makeResult } from '../test/fixtures'
+import { makeResult, makeVoided } from '../test/fixtures'
 import { observedStats } from './stats'
 
 describe('observedStats', () => {
@@ -40,5 +40,26 @@ describe('observedStats', () => {
     expect(stats.n).toBe(1)
     expect(stats.sd).toBeNull()
     expect(stats.cv).toBeNull()
+  })
+
+  it('excludes voided results from every statistic', () => {
+    const live = [
+      makeResult({ id: 1, value: 100, recorded_at: '2026-07-08T08:00:00Z' }),
+      makeResult({ id: 2, value: 110, recorded_at: '2026-07-08T09:00:00Z' }),
+      makeResult({ id: 3, value: 90, recorded_at: '2026-07-08T10:00:00Z' }),
+    ]
+    // A wild value that would drag the mean well off if it still counted.
+    const withVoided = [...live, makeVoided({ id: 4, value: 500 })]
+
+    expect(observedStats(withVoided)).toEqual(observedStats(live))
+    expect(observedStats(withVoided).n).toBe(3)
+  })
+
+  it('reports the latest live status, not a voided one', () => {
+    const stats = observedStats([
+      makeResult({ id: 1, value: 100, recorded_at: '2026-07-08T08:00:00Z', status: 'warning' }),
+      makeVoided({ id: 2, value: 116, recorded_at: '2026-07-08T09:00:00Z' }),
+    ])
+    expect(stats.latestStatus).toBe('warning')
   })
 })

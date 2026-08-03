@@ -20,7 +20,7 @@ export interface QCLot {
   updated_at: string
 }
 
-export type ResultStatus = 'pending' | 'in_control' | 'warning' | 'rejected'
+export type ResultStatus = 'pending' | 'in_control' | 'warning' | 'rejected' | 'voided'
 
 export interface QCResult {
   id: number
@@ -30,6 +30,9 @@ export interface QCResult {
   recorded_by: string
   accepted: boolean | null
   westgard_violations: string[] | null
+  voided_at: string | null
+  voided_by: string | null
+  void_reason: string | null
   status: ResultStatus
   created_at: string
   updated_at: string
@@ -37,12 +40,28 @@ export interface QCResult {
 
 export interface LotResults {
   lot_id: number
+  lot_number: string
   analyte_name: string
   unit: string
   level: string
   target_mean: number
   target_sd: number
+  expiration_date: string
+  active: boolean
   results: QCResult[]
+}
+
+export interface QCResultVoid {
+  voided_by: string
+  void_reason: string
+}
+
+export interface QCLotUpdate {
+  manufacturer?: string
+  target_mean?: number
+  target_sd?: number
+  expiration_date?: string
+  active?: boolean
 }
 
 export interface QCResultCreate {

@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 
 import type { LotResults } from '../api/types'
+import { ExpiredBadge } from './ExpiredBadge'
 import { LeveyJenningsChart } from './LeveyJenningsChart'
+import { isExpired, liveResults } from './lot'
 import { StatsSummary } from './StatsSummary'
 
 export function LotTrackerCard({ data }: { data: LotResults }) {
@@ -12,12 +14,16 @@ export function LotTrackerCard({ data }: { data: LotResults }) {
     >
       <div className="mb-2">
         <h3 className="font-semibold">
-          {data.analyte_name} <span className="text-slate-400">— {data.level}</span>
+          {data.analyte_name} <span className="text-slate-400">{data.level}</span>
         </h3>
-        <p className="text-xs text-slate-400">{data.unit}</p>
+        <p className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+          <span className="font-mono">{data.lot_number}</span>
+          <span>{data.unit}</span>
+          {isExpired(data.expiration_date) && <ExpiredBadge />}
+        </p>
       </div>
 
-      {data.results.length > 0 ? (
+      {liveResults(data.results).length > 0 ? (
         <LeveyJenningsChart
           data={data}
           height={160}

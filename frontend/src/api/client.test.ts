@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { ApiError, createResult, listLots } from './client'
+import { ApiError, createResult, getLotResults, voidResult } from './client'
 
 function jsonResponse(body: unknown, init: { ok?: boolean; status?: number } = {}): Response {
   return {
@@ -15,15 +15,33 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('listLots', () => {
-  it('requests active lots and returns the parsed body', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(jsonResponse([{ id: 1 }]))
+describe('getLotResults', () => {
+  it('requests the lot bundle with a limit and returns the parsed body', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ lot_id: 1, results: [] }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const lots = await listLots({ activeOnly: true })
+    const bundle = await getLotResults(1, 30)
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/v1/qc-lots?active=true')
-    expect(lots).toEqual([{ id: 1 }])
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/qc-lots/1/results?limit=30')
+    expect(bundle).toEqual({ lot_id: 1, results: [] })
+  })
+})
+
+describe('voidResult', () => {
+  it('POSTs the reason to the void sub-resource', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(jsonResponse({ id: 5, status: 'voided' }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await voidResult(5, { voided_by: 'supervisor', void_reason: 'wrong tube' })
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/v1/qc-results/5/void')
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(String(init.body))).toEqual({
+      voided_by: 'supervisor',
+      void_reason: 'wrong tube',
+    })
+    expect(result.status).toBe('voided')
   })
 })
 
@@ -52,7 +70,10 @@ describe('error handling', () => {
         ),
     )
 
-    await expect(listLots()).rejects.toMatchObject({ status: 404, message: 'QC lot not found' })
+    await expect(getLotResults(1)).rejects.toMatchObject({
+      status: 404,
+      message: 'QC lot not found',
+    })
   })
 
   it('joins FastAPI validation error lists into one message', async () => {
@@ -68,7 +89,7 @@ describe('error handling', () => {
         ),
     )
 
-    const error = await listLots().catch((e: unknown) => e)
+    const error = await getLotResults(1).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ApiError)
     expect((error as ApiError).message).toBe('field required; too small')
   })

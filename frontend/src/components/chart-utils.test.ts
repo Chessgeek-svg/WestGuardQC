@@ -1,23 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import type { QCResult } from '../api/types'
+import { makeResult as result, makeVoided } from '../test/fixtures'
 import { referenceLines, statusColor, toChartPoints, yDomain, zScore } from './chart-utils'
-
-function result(overrides: Partial<QCResult>): QCResult {
-  return {
-    id: 1,
-    qc_lot_id: 1,
-    value: 100,
-    recorded_at: '2026-07-08T08:00:00Z',
-    recorded_by: 'tech1',
-    accepted: true,
-    westgard_violations: [],
-    status: 'in_control',
-    created_at: '2026-07-08T08:00:00Z',
-    updated_at: '2026-07-08T08:00:00Z',
-    ...overrides,
-  }
-}
 
 describe('referenceLines', () => {
   it('returns the mean plus six SD boundaries', () => {
@@ -31,8 +15,9 @@ describe('referenceLines', () => {
 
 describe('statusColor', () => {
   it('maps each status to a distinct token', () => {
-    const colors = (['in_control', 'warning', 'rejected', 'pending'] as const).map(statusColor)
-    expect(new Set(colors).size).toBe(4)
+    const statuses = ['in_control', 'warning', 'rejected', 'pending', 'voided'] as const
+    const colors = statuses.map(statusColor)
+    expect(new Set(colors).size).toBe(statuses.length)
     expect(statusColor('rejected')).toContain('rejected')
   })
 })
@@ -46,6 +31,15 @@ describe('toChartPoints', () => {
     expect(points[0].t).toBe(new Date('2026-07-08T08:00:00Z').getTime())
     expect(points[0].value).toBe(101)
     expect(points[1].violations).toEqual([])
+  })
+
+  it('omits voided results, which no longer count', () => {
+    const points = toChartPoints([
+      result({ id: 1, value: 101 }),
+      makeVoided({ id: 2, value: 150 }),
+      result({ id: 3, value: 99 }),
+    ])
+    expect(points.map((p) => p.value)).toEqual([101, 99])
   })
 })
 

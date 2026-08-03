@@ -1,4 +1,5 @@
 import type { QCResult, ResultStatus } from '../api/types'
+import { liveResults } from './lot'
 
 export { statusColor, statusLabel } from './status'
 
@@ -27,9 +28,10 @@ export function referenceLines(mean: number, sd: number): RefLine[] {
   return lines
 }
 
-/** Map API results to chart points, x as epoch milliseconds for a time axis. */
+/** Map API results to chart points, x as epoch milliseconds for a time axis.
+ *  Voided results are withdrawn from evaluation, so they are not plotted. */
 export function toChartPoints(results: QCResult[]): ChartPoint[] {
-  return results.map((r) => ({
+  return liveResults(results).map((r) => ({
     t: new Date(r.recorded_at).getTime(),
     value: r.value,
     status: r.status,

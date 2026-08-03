@@ -1,4 +1,11 @@
-import type { Analyte, LotResults, QCLot, QCResult, QCResultCreate } from './types'
+import type {
+  LotResults,
+  QCLot,
+  QCLotUpdate,
+  QCResult,
+  QCResultCreate,
+  QCResultVoid,
+} from './types'
 
 const BASE_URL = import.meta.env.VITE_API_BASE ?? ''
 
@@ -36,9 +43,9 @@ async function apiGet<T>(path: string): Promise<T> {
   return (await response.json()) as T
 }
 
-async function apiPost<T>(path: string, body: unknown): Promise<T> {
+async function apiSend<T>(method: 'POST' | 'PATCH', path: string, body: unknown): Promise<T> {
   const response = await fetch(`${BASE_URL}${path}`, {
-    method: 'POST',
+    method,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
@@ -46,13 +53,8 @@ async function apiPost<T>(path: string, body: unknown): Promise<T> {
   return (await response.json()) as T
 }
 
-export function listAnalytes(): Promise<Analyte[]> {
-  return apiGet<Analyte[]>('/api/v1/analytes')
-}
-
-export function listLots(options: { activeOnly?: boolean } = {}): Promise<QCLot[]> {
-  const query = options.activeOnly ? '?active=true' : ''
-  return apiGet<QCLot[]>(`/api/v1/qc-lots${query}`)
+function apiPost<T>(path: string, body: unknown): Promise<T> {
+  return apiSend<T>('POST', path, body)
 }
 
 export function getLotResults(lotId: number, limit = 50): Promise<LotResults> {
@@ -67,4 +69,14 @@ export function getDashboard(analyteId?: number, limit = 30): Promise<LotResults
 
 export function createResult(payload: QCResultCreate): Promise<QCResult> {
   return apiPost<QCResult>('/api/v1/qc-results', payload)
+}
+
+/** Withdraw a result from evaluation. The row survives; the verdicts of the
+ *  results after it are recomputed server-side without it. */
+export function voidResult(resultId: number, payload: QCResultVoid): Promise<QCResult> {
+  return apiPost<QCResult>(`/api/v1/qc-results/${resultId}/void`, payload)
+}
+
+export function updateLot(lotId: number, payload: QCLotUpdate): Promise<QCLot> {
+  return apiSend<QCLot>('PATCH', `/api/v1/qc-lots/${lotId}`, payload)
 }

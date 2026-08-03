@@ -1,4 +1,5 @@
 import type { QCResult, ResultStatus } from '../api/types'
+import { liveResults } from './lot'
 
 export interface ObservedStats {
   n: number
@@ -20,12 +21,16 @@ const EMPTY: ObservedStats = {
 
 /** Observed statistics for a lot's results: sample SD (n-1), CV%, and the
  *  average of the ten most recent values. Nulls where undefined (empty set,
- *  or SD/CV that need more than one point or a non-zero mean). */
+ *  or SD/CV that need more than one point or a non-zero mean).
+ *
+ *  Voided results are excluded, so a withdrawn entry stops skewing the
+ *  observed mean and SD the moment it is voided. */
 export function observedStats(results: QCResult[]): ObservedStats {
-  const n = results.length
+  const live = liveResults(results)
+  const n = live.length
   if (n === 0) return EMPTY
 
-  const byTime = [...results].sort(
+  const byTime = [...live].sort(
     (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime(),
   )
   const values = byTime.map((r) => r.value)

@@ -26,4 +26,7 @@ body {
   --lj-status-warning: #fbbf24;
   --lj-status-rejected: #ef4444;
   --lj-status-pending: #94a3b8;
+  /* Voided results are withdrawn from evaluation, so they read as inert
+     rather than as another verdict competing for attention. */
+  --lj-status-voided: #64748b;
 }

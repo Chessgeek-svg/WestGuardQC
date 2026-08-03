@@ -108,10 +108,11 @@ export function LeveyJenningsChart({
       {showCaption && (
         <figcaption className="mb-2">
           <h2 className="text-lg font-semibold">
-            {data.analyte_name} <span className="text-slate-400">— {data.level}</span>
+            {data.analyte_name} <span className="text-slate-400">{data.level}</span>
           </h2>
           <p className="text-sm text-slate-400">
-            Target {mean} ± {sd} {data.unit}
+            Lot <span className="font-mono">{data.lot_number}</span>, target {mean} ± {sd}{' '}
+            {data.unit}
           </p>
         </figcaption>
       )}
