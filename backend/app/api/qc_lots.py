@@ -4,7 +4,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.api.deps import SessionDep
 from app.models import Analyte, QCLot
-from app.schemas import QCLotCreate, QCLotRead
+from app.schemas import QCLotCreate, QCLotRead, QCLotUpdate
+from app.services.qc_result import lock_lot, reevaluate
 
 router = APIRouter(prefix="/qc-lots", tags=["qc-lots"])
 
@@ -48,4 +49,34 @@ async def get_qc_lot(lot_id: int, session: SessionDep) -> QCLot:
     lot = await session.get(QCLot, lot_id)
     if lot is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "QC lot not found")
+    return lot
+
+
+@router.patch("/{lot_id}", response_model=QCLotRead)
+async def update_qc_lot(lot_id: int, data: QCLotUpdate, session: SessionDep) -> QCLot:
+    """Revise a lot's targets, expiry, or active state.
+
+    Retiring a lot (active=False) drops it off the dashboard and needs no
+    rescoring. Revising target_mean or target_sd moves every z-score in the
+    lot, so all of its results are rescored against the new targets.
+    """
+    lot = await session.get(QCLot, lot_id)
+    if lot is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "QC lot not found")
+
+    changes = data.model_dump(exclude_unset=True)
+    retargeted = any(field in changes for field in ("target_mean", "target_sd"))
+    if retargeted:
+        await lock_lot(session, lot)
+    for field, value in changes.items():
+        setattr(lot, field, value)
+    await session.flush()
+
+    if retargeted:
+        # After the flush, so the rescore reads the new targets rather than
+        # the ones the results were originally judged against.
+        await reevaluate(session, lot)
+
+    await session.commit()
+    await session.refresh(lot)
     return lot
