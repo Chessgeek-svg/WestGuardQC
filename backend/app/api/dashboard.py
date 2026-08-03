@@ -2,11 +2,11 @@ from collections import defaultdict
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+from sqlalchemy import func, select
+from sqlalchemy.orm import aliased, selectinload
 
 from app.api.deps import SessionDep
-from app.models import QCLot, QCResult
+from app.models import CHRONOLOGICAL, QCLot, QCResult
 from app.schemas import LotResults, QCResultRead
 
 router = APIRouter(tags=["dashboard"])
@@ -31,16 +31,35 @@ async def get_dashboard(
     if not lots:
         return []
 
-    lot_ids = [lot.id for lot in lots]
-    results_stmt = (
-        select(QCResult)
-        .where(QCResult.qc_lot_id.in_(lot_ids))
-        .order_by(QCResult.qc_lot_id, QCResult.recorded_at.desc())
+    # Rank each lot's results newest-first and keep the top `limit` per lot, so
+    # Postgres discards the older rows instead of shipping every result for
+    # every lot to be truncated here.
+    ranked = (
+        select(
+            QCResult,
+            func.row_number()
+            .over(
+                partition_by=QCResult.qc_lot_id,
+                order_by=[column.desc() for column in CHRONOLOGICAL],
+            )
+            .label("rank"),
+        )
+        .where(QCResult.qc_lot_id.in_([lot.id for lot in lots]))
+        .subquery()
     )
+    # rank 1 is the newest, so descending rank hands back the kept rows
+    # oldest-first without restating the sort key the window already applied.
+    recent = aliased(QCResult, ranked)
+    results_stmt = (
+        select(recent)
+        .where(ranked.c.rank <= limit)
+        .order_by(ranked.c.qc_lot_id, ranked.c.rank.desc())
+    )
+
+    # Already oldest-first, which is the order the chart wants.
     recent_by_lot: dict[int, list[QCResult]] = defaultdict(list)
     for result in await session.scalars(results_stmt):
-        if len(recent_by_lot[result.qc_lot_id]) < limit:
-            recent_by_lot[result.qc_lot_id].append(result)
+        recent_by_lot[result.qc_lot_id].append(result)
 
     lots.sort(key=lambda lot: (lot.analyte.name, lot.level))
     return [
@@ -51,9 +70,7 @@ async def get_dashboard(
             level=lot.level,
             target_mean=lot.target_mean,
             target_sd=lot.target_sd,
-            results=[
-                QCResultRead.model_validate(result) for result in reversed(recent_by_lot[lot.id])
-            ],
+            results=[QCResultRead.model_validate(result) for result in recent_by_lot[lot.id]],
         )
         for lot in lots
     ]
