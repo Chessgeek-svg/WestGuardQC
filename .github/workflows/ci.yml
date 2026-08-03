@@ -50,6 +50,14 @@ jobs:
       - name: Type check (mypy)
         run: mypy app tests
 
+      # Must run before pytest, which rebuilds the schema from the models with
+      # create_all. `check` fails if the models have drifted from the
+      # migrations, which the test suite would otherwise never notice.
+      - name: Migrations (alembic)
+        run: |
+          alembic upgrade head
+          alembic check
+
       - name: Test (pytest)
         run: pytest -v
 
