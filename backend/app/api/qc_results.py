@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -37,7 +39,11 @@ async def get_qc_result(result_id: int, session: SessionDep) -> QCResult:
 
 
 @router.get("/qc-lots/{lot_id}/results", response_model=LotResults)
-async def get_lot_results(lot_id: int, session: SessionDep, limit: int = 50) -> LotResults:
+async def get_lot_results(
+    lot_id: int,
+    session: SessionDep,
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
+) -> LotResults:
     lot = await session.scalar(
         select(QCLot).options(selectinload(QCLot.analyte)).where(QCLot.id == lot_id)
     )

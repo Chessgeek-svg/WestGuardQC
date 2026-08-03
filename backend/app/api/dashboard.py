@@ -1,6 +1,7 @@
 from collections import defaultdict
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
@@ -15,7 +16,7 @@ router = APIRouter(tags=["dashboard"])
 async def get_dashboard(
     session: SessionDep,
     analyte_id: int | None = None,
-    limit: int = 30,
+    limit: Annotated[int, Query(ge=1, le=200)] = 30,
 ) -> list[LotResults]:
     """Active lots with their recent results, one bundle per lot.
 

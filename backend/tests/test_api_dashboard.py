@@ -47,6 +47,12 @@ async def test_limit_caps_results_per_lot(client: AsyncClient) -> None:
     assert hours == ["11", "12", "13"]
 
 
+async def test_rejects_out_of_range_limits(client: AsyncClient) -> None:
+    for limit in (0, -1, 201):
+        response = await client.get("/api/v1/dashboard", params={"limit": limit})
+        assert response.status_code == 422, limit
+
+
 async def test_filters_by_analyte(client: AsyncClient) -> None:
     a1 = await make_analyte(client, name="Glucose")
     a2 = await make_analyte(client, name="Sodium")

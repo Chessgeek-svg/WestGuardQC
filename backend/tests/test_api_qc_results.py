@@ -129,5 +129,14 @@ async def test_lot_results_respects_limit(client: AsyncClient) -> None:
     assert len(response.json()["results"]) == 3
 
 
+async def test_lot_results_rejects_out_of_range_limits(client: AsyncClient) -> None:
+    analyte_id = await make_analyte(client)
+    lot_id = await make_lot(client, analyte_id)
+    # A negative limit used to reach Postgres and fail there as a 500.
+    for limit in (0, -1, 501):
+        response = await client.get(f"/api/v1/qc-lots/{lot_id}/results", params={"limit": limit})
+        assert response.status_code == 422, limit
+
+
 async def test_lot_results_missing_lot_returns_404(client: AsyncClient) -> None:
     assert (await client.get("/api/v1/qc-lots/999/results")).status_code == 404
