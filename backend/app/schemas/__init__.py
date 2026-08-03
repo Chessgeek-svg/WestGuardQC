@@ -1,6 +1,12 @@
 from app.schemas.analyte import AnalyteCreate, AnalyteRead
 from app.schemas.qc_lot import QCLotCreate, QCLotRead
-from app.schemas.qc_result import LotResults, QCResultCreate, QCResultRead
+from app.schemas.qc_result import (
+    LotResults,
+    QCResultCreate,
+    QCResultRead,
+    QCResultVoid,
+    ResultStatus,
+)
 
 __all__ = [
     "AnalyteCreate",
@@ -10,4 +16,6 @@ __all__ = [
     "QCLotRead",
     "QCResultCreate",
     "QCResultRead",
+    "QCResultVoid",
+    "ResultStatus",
 ]

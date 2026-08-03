@@ -19,6 +19,12 @@ class QCResult(TimestampMixin, Base):
     yet, True/False is the evaluation outcome. westgard_violations holds the
     rule codes flagged by the engine; None mirrors the unevaluated state and
     an empty list means evaluated and in control.
+
+    A bad entry is voided rather than deleted, the way a laboratory annotates
+    a QC record instead of erasing it. voided_at set means the result no
+    longer feeds rule evaluation, charts, or observed statistics, but it stays
+    in the table with the reason it was withdrawn and the verdict it carried
+    at the time.
     """
 
     __tablename__ = "qc_results"
@@ -33,8 +39,16 @@ class QCResult(TimestampMixin, Base):
     recorded_by: Mapped[str] = mapped_column(String(100))
     accepted: Mapped[bool | None]
     westgard_violations: Mapped[list[str] | None] = mapped_column(JSONB)
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    voided_by: Mapped[str | None] = mapped_column(String(100))
+    void_reason: Mapped[str | None] = mapped_column(String(500))
 
     qc_lot: Mapped["QCLot"] = relationship(back_populates="results")
+
+    @property
+    def is_live(self) -> bool:
+        """True while the result still counts toward rules and statistics."""
+        return self.voided_at is None
 
     def __repr__(self) -> str:
         return f"QCResult(id={self.id!r}, qc_lot_id={self.qc_lot_id!r}, value={self.value!r})"

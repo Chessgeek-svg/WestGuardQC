@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -6,8 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from app.api.deps import SessionDep
 from app.models import CHRONOLOGICAL, QCLot, QCResult
-from app.schemas import LotResults, QCResultCreate, QCResultRead
-from app.services.qc_result import evaluate_and_store
+from app.schemas import LotResults, QCResultCreate, QCResultRead, QCResultVoid
+from app.services.qc_result import evaluate_and_store, lock_lot, reevaluate
 
 router = APIRouter(tags=["qc-results"])
 
@@ -35,6 +36,36 @@ async def get_qc_result(result_id: int, session: SessionDep) -> QCResult:
     result = await session.get(QCResult, result_id)
     if result is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "QC result not found")
+    return result
+
+
+@router.post("/qc-results/{result_id}/void", response_model=QCResultRead)
+async def void_qc_result(result_id: int, data: QCResultVoid, session: SessionDep) -> QCResult:
+    """Withdraw a result from evaluation without deleting it.
+
+    A POST to a sub-resource rather than a DELETE, because the row stays: the
+    lab record of what was run and why it was discounted is the point. Results
+    after it are rescored, since their history no longer contains this one.
+    """
+    result = await session.get(QCResult, result_id)
+    if result is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "QC result not found")
+    if result.voided_at is not None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "QC result is already voided")
+
+    lot = await session.get(QCLot, result.qc_lot_id)
+    if lot is None:  # pragma: no cover - the foreign key makes this unreachable
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "QC lot not found")
+
+    await lock_lot(session, lot)
+    result.voided_at = datetime.now(UTC)
+    result.voided_by = data.voided_by
+    result.void_reason = data.void_reason
+    await session.flush()
+
+    await reevaluate(session, lot, start=(result.recorded_at, result.id))
+    await session.commit()
+    await session.refresh(result)
     return result
 
 

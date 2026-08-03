@@ -48,3 +48,22 @@ async def post_result(
             "recorded_at": recorded_at,
         },
     )
+
+
+async def void_result(
+    client: AsyncClient,
+    result_id: int,
+    reason: str = "transcription error",
+    voided_by: str = "supervisor",
+) -> Response:
+    return await client.post(
+        f"/api/v1/qc-results/{result_id}/void",
+        json={"voided_by": voided_by, "void_reason": reason},
+    )
+
+
+async def lot_results(client: AsyncClient, lot_id: int) -> list[dict[str, object]]:
+    response = await client.get(f"/api/v1/qc-lots/{lot_id}/results")
+    assert response.status_code == 200, response.text
+    results: list[dict[str, object]] = response.json()["results"]
+    return results
