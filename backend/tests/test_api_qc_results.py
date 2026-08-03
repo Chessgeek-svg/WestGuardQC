@@ -116,6 +116,10 @@ async def test_lot_results_endpoint_returns_stats_and_ordered_points(
     assert body["unit"] == "mg/dL"
     assert body["target_mean"] == 100.0
     assert body["target_sd"] == 5.0
+    # Identity, so a reader can tell one lot from the next one of the same level.
+    assert body["lot_number"] == "L1"
+    assert body["expiration_date"] == "2027-01-01"
+    assert body["active"] is True
     statuses = [(point["value"], point["status"]) for point in body["results"]]
     assert statuses == [(101.0, "in_control"), (116.0, "rejected")]
 

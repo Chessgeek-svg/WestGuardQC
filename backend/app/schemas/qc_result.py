@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -57,9 +57,12 @@ class LotResults(BaseModel):
     """
 
     lot_id: int
+    lot_number: str
     analyte_name: str
     unit: str
     level: str
     target_mean: float
     target_sd: float
+    expiration_date: date
+    active: bool
     results: list[QCResultRead]

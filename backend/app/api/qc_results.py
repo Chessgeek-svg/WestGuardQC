@@ -92,10 +92,13 @@ async def get_lot_results(
 
     return LotResults(
         lot_id=lot.id,
+        lot_number=lot.lot_number,
         analyte_name=lot.analyte.name,
         unit=lot.analyte.unit,
         level=lot.level,
         target_mean=lot.target_mean,
         target_sd=lot.target_sd,
+        expiration_date=lot.expiration_date,
+        active=lot.active,
         results=[QCResultRead.model_validate(r) for r in newest_first],
     )
