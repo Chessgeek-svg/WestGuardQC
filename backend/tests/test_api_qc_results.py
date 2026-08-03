@@ -54,6 +54,37 @@ async def test_history_is_ordered_by_recorded_at_not_insertion(client: AsyncClie
     assert backdated.json()["westgard_violations"] == ["1-2s"]
 
 
+async def test_backdated_result_re_evaluates_the_results_after_it(client: AsyncClient) -> None:
+    analyte_id = await make_analyte(client)
+    lot_id = await make_lot(client, analyte_id)  # mean 100, sd 5
+
+    later = await post_result(client, lot_id, 111.0, "2026-07-08T09:00:00Z")  # +2.2 SD
+    assert later.json()["westgard_violations"] == ["1-2s"]
+
+    # Backdated in front of it. On its own the new result is only a warning,
+    # but it hands the 09:00 result a prior beyond +2 SD, which makes a 2-2s.
+    await post_result(client, lot_id, 112.0, "2026-07-08T08:00:00Z")  # +2.4 SD
+
+    results = (await client.get(f"/api/v1/qc-lots/{lot_id}/results")).json()["results"]
+    assert [r["value"] for r in results] == [112.0, 111.0]
+    assert results[0]["westgard_violations"] == ["1-2s"]
+    assert "2-2s" in results[1]["westgard_violations"]
+    assert results[1]["status"] == "rejected"
+
+
+async def test_results_sharing_a_timestamp_still_see_each_other(client: AsyncClient) -> None:
+    analyte_id = await make_analyte(client)
+    lot_id = await make_lot(client, analyte_id)
+
+    same_time = "2026-07-08T08:00:00Z"
+    await post_result(client, lot_id, 111.0, same_time)  # +2.2 SD
+    second = await post_result(client, lot_id, 112.0, same_time)  # +2.4 SD
+
+    # Ordering falls back to insertion, so the first result is in the second's
+    # history rather than being excluded for sharing its timestamp.
+    assert "2-2s" in second.json()["westgard_violations"]
+
+
 async def test_post_to_missing_lot_returns_404(client: AsyncClient) -> None:
     response = await post_result(client, 999, 100.0, "2026-07-08T08:00:00Z")
     assert response.status_code == 404

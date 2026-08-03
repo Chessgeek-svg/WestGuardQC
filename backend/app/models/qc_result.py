@@ -22,7 +22,9 @@ class QCResult(TimestampMixin, Base):
     """
 
     __tablename__ = "qc_results"
-    __table_args__ = (Index("ix_qc_results_lot_recorded", "qc_lot_id", "recorded_at"),)
+    # id trails recorded_at so the index covers CHRONOLOGICAL ordering and the
+    # dashboard's per-lot window function.
+    __table_args__ = (Index("ix_qc_results_lot_recorded", "qc_lot_id", "recorded_at", "id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     qc_lot_id: Mapped[int] = mapped_column(ForeignKey("qc_lots.id"))
@@ -36,3 +38,10 @@ class QCResult(TimestampMixin, Base):
 
     def __repr__(self) -> str:
         return f"QCResult(id={self.id!r}, qc_lot_id={self.qc_lot_id!r}, value={self.value!r})"
+
+
+# The order results are evaluated and displayed in. recorded_at alone is not
+# enough: two results in the same second would come back in whatever order the
+# planner chose, and rule evaluation would vary run to run. id breaks the tie by
+# insertion, so the sequence is stable and reproducible.
+CHRONOLOGICAL = (QCResult.recorded_at, QCResult.id)

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.api.deps import SessionDep
-from app.models import QCLot, QCResult
+from app.models import CHRONOLOGICAL, QCLot, QCResult
 from app.schemas import LotResults, QCResultCreate, QCResultRead
 from app.services.qc_result import evaluate_and_store
 
@@ -47,7 +47,7 @@ async def get_lot_results(lot_id: int, session: SessionDep, limit: int = 50) -> 
     stmt = (
         select(QCResult)
         .where(QCResult.qc_lot_id == lot_id)
-        .order_by(QCResult.recorded_at.desc())
+        .order_by(*(column.desc() for column in CHRONOLOGICAL))
         .limit(limit)
     )
     newest_first = list(await session.scalars(stmt))
