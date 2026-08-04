@@ -18,5 +18,8 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
+# 127.0.0.1 rather than localhost: the container resolves localhost to ::1
+# first, and nginx's `listen 80` binds IPv4 only, so the check would be refused
+# against a server that is serving perfectly well.
 HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=5 \
-    CMD ["wget", "--spider", "-q", "http://localhost/"]
+    CMD ["wget", "--spider", "-q", "http://127.0.0.1/"]
