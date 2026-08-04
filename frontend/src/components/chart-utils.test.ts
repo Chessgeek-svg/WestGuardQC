@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
 import { makeResult as result, makeVoided } from '../test/fixtures'
-import { referenceLines, statusColor, toChartPoints, yDomain, zScore } from './chart-utils'
+import {
+  formatAxisValue,
+  referenceLines,
+  statusColor,
+  toChartPoints,
+  yDomain,
+  zScore,
+} from './chart-utils'
 
 describe('referenceLines', () => {
   it('returns the mean plus six SD boundaries', () => {
@@ -54,6 +61,30 @@ describe('yDomain', () => {
     const [low, high] = yDomain(100, 5, [130])
     expect(high).toBeGreaterThanOrEqual(130)
     expect(low).toBeLessThan(85)
+  })
+})
+
+describe('formatAxisValue', () => {
+  it('hides float noise that would otherwise overflow the axis gutter', () => {
+    // What yDomain arithmetic actually produces for a mean of 12, SD 0.4.
+    expect(formatAxisValue(11.999999999999998, 0.4)).toBe('12.00')
+    expect(formatAxisValue(10.800000000000001, 0.4)).toBe('10.80')
+  })
+
+  it('scales precision to the SD', () => {
+    expect(formatAxisValue(104.945, 3)).toBe('104.9')
+    expect(formatAxisValue(274.75, 7.5)).toBe('274.8')
+    expect(formatAxisValue(250.4, 25)).toBe('250')
+  })
+
+  it('stays short enough to fit the axis', () => {
+    for (const [value, sd] of [
+      [11.999999999999998, 0.4],
+      [104.945, 3],
+      [274.75, 7.5],
+    ] as const) {
+      expect(formatAxisValue(value, sd).length).toBeLessThanOrEqual(6)
+    }
   })
 })
 

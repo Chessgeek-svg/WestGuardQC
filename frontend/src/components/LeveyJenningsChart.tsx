@@ -12,6 +12,7 @@ import {
 import type { LotResults, ResultStatus } from '../api/types'
 import {
   type ChartPoint,
+  formatAxisValue,
   referenceLines,
   statusColor,
   statusLabel,
@@ -130,7 +131,13 @@ export function LeveyJenningsChart({
               stroke="var(--lj-muted)"
               tick={{ fontSize: 12 }}
             />
-            <YAxis domain={domain} stroke="var(--lj-muted)" tick={{ fontSize: 12 }} width={48} />
+            <YAxis
+              domain={domain}
+              tickFormatter={(value: number) => formatAxisValue(value, sd)}
+              stroke="var(--lj-muted)"
+              tick={{ fontSize: 12 }}
+              width={52}
+            />
             <Tooltip content={renderTooltip} />
             {lines.map((line) => (
               <ReferenceLine

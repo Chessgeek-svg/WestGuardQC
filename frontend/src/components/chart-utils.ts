@@ -51,3 +51,15 @@ export function yDomain(mean: number, sd: number, values: number[]): [number, nu
 export function zScore(value: number, mean: number, sd: number): number {
   return sd > 0 ? (value - mean) / sd : 0
 }
+
+/** Format a y-axis tick to a precision the lot's SD justifies.
+ *
+ *  The domain is arithmetic on floats, so a tick lands on values like
+ *  11.999999999999998. Rendered raw those overflow the axis gutter and get
+ *  clipped mid-number, which is how ")0000002" ends up on a chart. How many
+ *  decimals are meaningful follows the SD: a control with an SD of 0.4 needs
+ *  two, one with an SD of 7.5 does not. */
+export function formatAxisValue(value: number, sd: number): string {
+  const decimals = sd >= 10 ? 0 : sd >= 1 ? 1 : 2
+  return value.toFixed(decimals)
+}
