@@ -84,7 +84,11 @@ Seeding resets the QC tables and writes four analytes across six lots, each with
 
 The dashboard is a grid of cards, one per active control lot, each identified by analyte, level, and lot number. A card carries a compact trendline showing just the mean and ±2 SD, the observed statistics next to the lot's targets, and the current status. Lots past their expiration date are badged. A dropdown narrows the grid to a single analyte.
 
+![The dashboard, showing six control lots with their trendlines and current status](docs/images/dashboard.png)
+
 Clicking a card opens lot detail: the full Levey-Jennings chart with all seven reference lines, hover tooltips giving the z-score and any violated rules, the observed-vs-target statistics table, the recent results with their violation badges, and a form for recording a new result. Submitting the form shows the verdict the new value earned before the chart refreshes.
+
+![Lot detail for Glucose Level 1, with the Levey-Jennings chart and the recent results table](docs/images/lot-detail.png)
 
 From there you can also void a bad result or retire the lot. Both are described below.
 
