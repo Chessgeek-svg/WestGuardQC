@@ -20,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import async_session_factory
 from app.models import Analyte, QCLot, QCResult
-from app.services.qc_result import evaluate_and_store
+from app.services.qc_result import evaluate_and_store, reevaluate
 
 # One result per day, oldest first, ending today.
 _RUN_COUNT = 28
@@ -37,6 +37,7 @@ class LotSpec:
         *,
         pattern: str = "clean",
         active: bool = True,
+        void_at: int | None = None,
     ) -> None:
         self.lot_number = lot_number
         self.level = level
@@ -48,6 +49,9 @@ class LotSpec:
         # currently reads warning); "empty" = no results (empty-card state).
         self.pattern = pattern
         self.active = active
+        # Index of a run entered wrong and later voided, so the demo data covers
+        # the voided state the way a real lot would carry one.
+        self.void_at = void_at
 
 
 class AnalyteSpec:
@@ -62,7 +66,7 @@ SPECS: list[AnalyteSpec] = [
         "Glucose",
         "mg/dL",
         [
-            LotSpec("GLU-1042", "Level 1", 95.0, 3.0, pattern="flagged_reject"),
+            LotSpec("GLU-1042", "Level 1", 95.0, 3.0, pattern="flagged_reject", void_at=25),
             LotSpec("GLU-1042", "Level 2", 250.0, 7.5, pattern="clean"),
         ],
     ),
@@ -105,6 +109,10 @@ def _values_for(spec: LotSpec, rng: random.Random) -> list[float]:
     elif spec.pattern == "flagged_warning":
         values[12] = mean + 3.2 * sd  # a 1-3s rejection mid-run
         values[-1] = mean + 2.3 * sd  # a 1-2s warning at the latest run
+    if spec.void_at is not None:
+        # A mistyped entry, far enough out to be obviously wrong on the chart
+        # but not so far that it stretches the y-axis and flattens the SD bands.
+        values[spec.void_at] = mean + 3.6 * sd
     return [round(v, 2) for v in values]
 
 
@@ -140,6 +148,7 @@ async def seed(session: AsyncSession) -> None:
             if lot_spec.pattern == "empty":
                 continue
 
+            stored: list[QCResult] = []
             for day, value in enumerate(_values_for(lot_spec, rng)):
                 result = QCResult(
                     qc_lot_id=lot.id,
@@ -148,6 +157,23 @@ async def seed(session: AsyncSession) -> None:
                     recorded_by="demo.tech",
                 )
                 await evaluate_and_store(session, lot, result)
+                stored.append(result)
+
+            if lot_spec.void_at is not None:
+                await _void(session, lot, stored[lot_spec.void_at])
+
+
+async def _void(session: AsyncSession, lot: QCLot, result: QCResult) -> None:
+    """Void a seeded result the same way the API does, rescore included.
+
+    The runs after it were scored against a history containing the bad value,
+    so they have to be re-judged without it.
+    """
+    result.voided_at = datetime.now(UTC)
+    result.voided_by = "demo.supervisor"
+    result.void_reason = "transcription error, value re-entered from the printout"
+    await session.flush()
+    await reevaluate(session, lot, start=(result.recorded_at, result.id))
 
 
 async def _summary(session: AsyncSession) -> tuple[int, int, int, int]:

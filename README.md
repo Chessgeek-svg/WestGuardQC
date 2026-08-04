@@ -78,7 +78,7 @@ Every setting reads from the environment and has a default that works, so a fres
 
 ### Demo data
 
-Seeding resets the QC tables and writes four analytes across six lots, each with about 28 days of daily results. A fixed RNG seed makes the data identical on every run, and every value goes through the real Westgard engine on its way in, so the statuses you see are the ones the app actually computes. The lots are picked to cover the states worth looking at. Glucose Level 1 currently reads rejected, Sodium Level 1 reads warning, three lots are in control, and Cholesterol Level 1 has no results at all so the empty card has something to show.
+Seeding resets the QC tables and writes four analytes across six lots, each with about 28 days of daily results. A fixed RNG seed makes the data identical on every run, and every value goes through the real Westgard engine on its way in, so the statuses you see are the ones the app actually computes. The lots are picked to cover the states worth looking at. Glucose Level 1 currently reads rejected and carries one mistyped result that was voided, Sodium Level 1 reads warning, three lots are in control, and Cholesterol Level 1 has no results at all so the empty card has something to show.
 
 ## The two views
 
