@@ -4,8 +4,6 @@ Levey-Jennings QC monitoring for a clinical laboratory, with Westgard multi-rule
 
 When a technologist records a control value, WestGuardQC scores it against the lot's recent history and hands back a verdict right away. The point is to catch an out-of-control run at the bench, while the analyzer is still in front of you, rather than during a monthly QC review three weeks later.
 
-> **Educational use only.** This software has not been validated for clinical use under CLIA '88 or ISO 15189. Do not use it to make patient diagnostic decisions.
-
 ## Background
 
 Labs run quality control material alongside patient samples. QC material is a manufactured sample with a known concentration, so if the analyzer reports the wrong number for it, you know the patient results from that run are suspect too. Each lot of QC material ships with a target mean and standard deviation from the manufacturer's package insert, usually refined against the lab's own accumulated data. Comparing what the lab actually observes to those targets is how you tell whether a method has drifted.
@@ -191,6 +189,8 @@ CI runs on every push to `main` and every pull request. The backend job runs ruf
 Because the nature of the program is to be a demo, there is no authentication, although there are plans to add some level of feature limitations based on role.
 
 The container stack is built for a demo rather than a deployment. Credentials default to `westguard/westguard`, Postgres publishes 5432 to the host, and nginx serves plain HTTP with no TLS in front of it.
+
+[ROADMAP.md](ROADMAP.md) covers what is missing beyond that, including corrective action records, per-instrument tracking, and configurable rules.
 
 ## License
 
