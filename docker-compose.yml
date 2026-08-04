@@ -1,3 +1,10 @@
+# The three backend-image services (migrate, backend, seed) differ only in the
+# command they run, so the build and environment are declared once here.
+x-backend: &backend
+  build: ./backend
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-westguard}:${POSTGRES_PASSWORD:-westguard}@db:5432/${POSTGRES_DB:-westguardqc}
+
 services:
   db:
     image: postgres:16-alpine
@@ -15,15 +22,43 @@ services:
       timeout: 5s
       retries: 10
 
-  backend:
-    build: ./backend
-    environment:
-      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-westguard}:${POSTGRES_PASSWORD:-westguard}@db:5432/${POSTGRES_DB:-westguardqc}
-    ports:
-      - "8000:8000"
+  # Runs to completion before the API starts, so the schema is always current.
+  # A separate service rather than an entrypoint step: migrating is a deploy
+  # action, and this way restarting the API does not re-run it.
+  migrate:
+    <<: *backend
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
     depends_on:
       db:
         condition: service_healthy
+
+  backend:
+    <<: *backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Opt-in, because seeding drops the QC tables first:
+  #   docker compose --profile seed run --rm seed
+  seed:
+    <<: *backend
+    command: ["python", "-m", "app.seed"]
+    profiles: ["seed"]
+    restart: "no"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

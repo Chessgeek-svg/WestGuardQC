@@ -8,18 +8,34 @@ VENV_PY ?= .venv/Scripts/python.exe
 #   docker compose exec db createdb -U westguard westguardqc_test
 TEST_DATABASE_URL ?= postgresql+asyncpg://westguard:westguard@localhost:5432/westguardqc_test
 
-.PHONY: help db migrate seed backend frontend test lint format
+.PHONY: help up down demo db migrate seed backend frontend test lint format
 
 help:
-	@echo "Targets:"
-	@echo "  db        start PostgreSQL (docker compose)"
+	@echo "Whole stack in containers:"
+	@echo "  up        build and start db, migrations, API, and web on :8080"
+	@echo "  demo      up plus seeded demo data"
+	@echo "  down      stop the stack (add ARGS=-v to drop the database volume)"
+	@echo ""
+	@echo "Local development, with hot reload:"
+	@echo "  db        start PostgreSQL only"
 	@echo "  migrate   apply Alembic migrations"
 	@echo "  seed      populate demo data"
 	@echo "  backend   run the FastAPI dev server on :8000"
 	@echo "  frontend  run the Vite dev server on :5173"
+	@echo ""
+	@echo "Checks:"
 	@echo "  test      run backend (pytest) and frontend (vitest) tests"
 	@echo "  lint      ruff + mypy + eslint + prettier checks"
 	@echo "  format    apply ruff and prettier formatting"
+
+up:
+	docker compose up -d --build
+
+demo: up
+	docker compose --profile seed run --rm seed
+
+down:
+	docker compose down $(ARGS)
 
 db:
 	docker compose up -d db
