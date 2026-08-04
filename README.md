@@ -112,7 +112,7 @@ What lands in the database is `accepted` and the list of rule codes that fired. 
 
 ### Voiding a result
 
-A mistyped or invalid entry is voided, never deleted. `POST /qc-results/{id}/void` takes a name and a reason and stamps them on the row, which stays in the table showing the verdict it carried at the time. What changes is that it stops counting: it drops out of rule evaluation, out of the chart, and out of the observed mean, SD, and CV. Results recorded after it are rescored without it, so a 2-2s that only held because of the voided value goes away on its own.
+A mistyped or invalid entry is voided, but never hard deleted. `POST /qc-results/{id}/void` takes a name and a reason and stamps them on the row, which stays in the table showing the verdict it carried at the time. The voided result drops out of rule evaluation and out of the observed mean, SD, and CV. Results recorded after it are rescored without it, so a 2-2s that only held because of the voided value goes away on its own.
 
 ### Revising targets
 

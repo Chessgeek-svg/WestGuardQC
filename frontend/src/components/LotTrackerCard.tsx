@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import type { LotResults } from '../api/types'
 import { ExpiredBadge } from './ExpiredBadge'
 import { LeveyJenningsChart } from './LeveyJenningsChart'
-import { isExpired, liveResults } from './lot'
+import { isExpired } from './lot'
 import { StatsSummary } from './StatsSummary'
 
 export function LotTrackerCard({ data }: { data: LotResults }) {
@@ -23,7 +23,7 @@ export function LotTrackerCard({ data }: { data: LotResults }) {
         </p>
       </div>
 
-      {liveResults(data.results).length > 0 ? (
+      {data.results.length > 0 ? (
         <LeveyJenningsChart
           data={data}
           height={160}

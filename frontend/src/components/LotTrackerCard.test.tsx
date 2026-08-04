@@ -71,12 +71,15 @@ describe('LotTrackerCard', () => {
     expect(screen.getByText(/expired/i)).toBeInTheDocument()
   })
 
-  it('treats an all-voided lot as having nothing to plot', () => {
+  it('still charts a lot whose only results are voided', () => {
     render(
       <MemoryRouter>
         <LotTrackerCard data={makeBundle({ results: [makeVoided({ id: 1 })] })} />
       </MemoryRouter>,
     )
-    expect(screen.getByText(/no results yet/i)).toBeInTheDocument()
+    // Something was measured, so the placeholder would be wrong. The stats
+    // still read empty, because voided results carry no weight.
+    expect(screen.queryByText(/no results yet/i)).not.toBeInTheDocument()
+    expect(screen.getByText('N = 0')).toBeInTheDocument()
   })
 })

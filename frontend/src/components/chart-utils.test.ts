@@ -40,13 +40,18 @@ describe('toChartPoints', () => {
     expect(points[1].violations).toEqual([])
   })
 
-  it('omits voided results, which no longer count', () => {
+  it('keeps voided results on the chart but off the trend line', () => {
     const points = toChartPoints([
       result({ id: 1, value: 101 }),
       makeVoided({ id: 2, value: 150 }),
       result({ id: 3, value: 99 }),
     ])
-    expect(points.map((p) => p.value)).toEqual([101, 99])
+    // Still three points, so the voided one can be drawn crossed out.
+    expect(points).toHaveLength(3)
+    // Null on the trend key, so the line bridges rather than detours.
+    expect(points.map((p) => p.value)).toEqual([101, null, 99])
+    expect(points.map((p) => p.voidedValue)).toEqual([null, 150, null])
+    expect(points.map((p) => p.voided)).toEqual([false, true, false])
   })
 })
 

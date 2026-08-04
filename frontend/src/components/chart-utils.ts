@@ -1,5 +1,4 @@
 import type { QCResult, ResultStatus } from '../api/types'
-import { liveResults } from './lot'
 
 export { statusColor, statusLabel } from './status'
 
@@ -12,7 +11,11 @@ export interface RefLine {
 
 export interface ChartPoint {
   t: number
-  value: number
+  /** The measured value, or null when voided, which breaks the trend line. */
+  value: number | null
+  /** Set only when voided, so voided points draw as their own marker series. */
+  voidedValue: number | null
+  voided: boolean
   status: ResultStatus
   recordedAt: string
   violations: string[]
@@ -29,15 +32,24 @@ export function referenceLines(mean: number, sd: number): RefLine[] {
 }
 
 /** Map API results to chart points, x as epoch milliseconds for a time axis.
- *  Voided results are withdrawn from evaluation, so they are not plotted. */
+ *
+ *  Voided results stay on the chart, drawn as a crossed-out marker, so the run
+ *  still shows that something was measured that day. They are split onto a
+ *  separate key: the trend line follows `value` and skips them, because the
+ *  line traces the results the rules actually acted on. */
 export function toChartPoints(results: QCResult[]): ChartPoint[] {
-  return liveResults(results).map((r) => ({
-    t: new Date(r.recorded_at).getTime(),
-    value: r.value,
-    status: r.status,
-    recordedAt: r.recorded_at,
-    violations: r.westgard_violations ?? [],
-  }))
+  return results.map((r) => {
+    const voided = r.voided_at !== null
+    return {
+      t: new Date(r.recorded_at).getTime(),
+      value: voided ? null : r.value,
+      voidedValue: voided ? r.value : null,
+      voided,
+      status: r.status,
+      recordedAt: r.recorded_at,
+      violations: r.westgard_violations ?? [],
+    }
+  })
 }
 
 /** Y range padded to always show the +/-3 SD lines and every point. */

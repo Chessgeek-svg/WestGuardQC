@@ -61,25 +61,33 @@ export function LeveyJenningsChart({
   const lines = referenceLines(mean, sd).filter(
     (line) => sdBands === 'all' || line.kind === 'mean' || line.label.endsWith('2SD'),
   )
+  // Voided points are still drawn, so the axis has to reach them too.
   const domain = yDomain(
     mean,
     sd,
-    points.map((p) => p.value),
+    points.map((p) => p.value ?? p.voidedValue).filter((v): v is number => v !== null),
   )
+  const hasVoided = points.some((p) => p.voided)
 
   const renderTooltip = ({ active, payload }: TooltipRenderProps) => {
     if (!active || !payload || payload.length === 0) return null
-    const point = payload[0].payload
+    const point = payload.find((entry) => entry.payload)?.payload
     if (!point) return null
+    const value = point.value ?? point.voidedValue
+    if (value === null) return null
     return (
       <div className="rounded border border-slate-300 bg-white p-2 text-sm text-slate-900 shadow dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
-        <div className="font-semibold">
-          {point.value} {data.unit}
+        <div className={`font-semibold ${point.voided ? 'text-slate-400 line-through' : ''}`}>
+          {value} {data.unit}
         </div>
-        <div>z = {zScore(point.value, mean, sd).toFixed(2)}</div>
+        <div>z = {zScore(value, mean, sd).toFixed(2)}</div>
         <div style={{ color: statusColor(point.status) }}>{statusLabel(point.status)}</div>
-        {point.violations.length > 0 && (
-          <div className="text-slate-400">{point.violations.join(', ')}</div>
+        {point.voided ? (
+          <div className="text-slate-400">Not counted toward the rules or statistics</div>
+        ) : (
+          point.violations.length > 0 && (
+            <div className="text-slate-400">{point.violations.join(', ')}</div>
+          )
         )}
         <div className="text-slate-400">{formatTimestamp(point.recordedAt)}</div>
       </div>
@@ -101,6 +109,21 @@ export function LeveyJenningsChart({
         stroke="var(--lj-surface)"
         strokeWidth={2}
       />
+    )
+  }
+
+  /** A voided result: the measurement still happened, so it stays on the chart,
+   *  crossed out and greyed to show it carries no weight. */
+  const renderVoidedDot = ({ cx, cy, payload }: DotRenderProps) => {
+    if (cx === undefined || cy === undefined || payload === undefined) {
+      return <g key="empty" />
+    }
+    const r = 5
+    return (
+      <g key={`voided-${payload.t}`} stroke={statusColor('voided')} strokeWidth={2}>
+        <line x1={cx - r} y1={cy - r} x2={cx + r} y2={cy + r} />
+        <line x1={cx - r} y1={cy + r} x2={cx + r} y2={cy - r} />
+      </g>
     )
   }
 
@@ -159,9 +182,22 @@ export function LeveyJenningsChart({
               stroke="var(--lj-secondary)"
               strokeWidth={2}
               isAnimationActive={false}
+              // Voided points are null here, and the trend bridges the gap
+              // rather than detouring through a result the rules ignored.
+              connectNulls
               dot={renderDot}
               activeDot={false}
             />
+            {hasVoided && (
+              <Line
+                type="linear"
+                dataKey="voidedValue"
+                stroke="none"
+                isAnimationActive={false}
+                dot={renderVoidedDot}
+                activeDot={false}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -177,6 +213,17 @@ export function LeveyJenningsChart({
               {statusLabel(status)}
             </li>
           ))}
+          {hasVoided && (
+            <li className="flex items-center gap-2">
+              <svg width="12" height="12" aria-hidden>
+                <g stroke={statusColor('voided')} strokeWidth={2}>
+                  <line x1="1" y1="1" x2="11" y2="11" />
+                  <line x1="1" y1="11" x2="11" y2="1" />
+                </g>
+              </svg>
+              Voided, not counted
+            </li>
+          )}
         </ul>
       )}
     </figure>
