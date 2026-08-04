@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 
 import { getDashboard } from '../api/client'
 import type { LotResults } from '../api/types'
 import { LotTrackerCard } from '../components/LotTrackerCard'
+import { RetiredLots } from '../components/RetiredLots'
 
 export function Dashboard() {
   const [bundles, setBundles] = useState<LotResults[]>([])
@@ -30,7 +32,14 @@ export function Dashboard() {
   if (loading) return <p className="text-slate-400">Loading…</p>
   if (error) return <p className="text-red-400">{error}</p>
   if (bundles.length === 0) {
-    return <p className="text-slate-400">No active lots yet.</p>
+    return (
+      <div>
+        <p className="text-slate-400">
+          No active lots yet. <Link to="/lots/new">Add one</Link> to start recording QC.
+        </p>
+        <RetiredLots />
+      </div>
+    )
   }
 
   const analytes = [...new Set(bundles.map((b) => b.analyte_name))].sort()
@@ -55,6 +64,12 @@ export function Dashboard() {
             </option>
           ))}
         </select>
+        <Link
+          to="/lots/new"
+          className="ml-auto rounded border border-slate-600 px-3 py-1.5 text-sm transition-colors hover:border-slate-400"
+        >
+          New lot
+        </Link>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -62,6 +77,8 @@ export function Dashboard() {
           <LotTrackerCard key={bundle.lot_id} data={bundle} />
         ))}
       </div>
+
+      <RetiredLots />
     </div>
   )
 }

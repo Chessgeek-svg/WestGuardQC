@@ -47,12 +47,13 @@ export function LotDetail() {
     }
   }
 
-  const handleRetire = async () => {
+  const setActive = async (active: boolean) => {
     try {
-      await updateLot(id, { active: false })
+      await updateLot(id, { active })
       await load()
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to retire lot')
+      const verb = active ? 'reactivate' : 'retire'
+      setError(err instanceof Error ? err.message : `Failed to ${verb} lot`)
     }
   }
 
@@ -68,7 +69,16 @@ export function LotDetail() {
       {data && (
         <div className="mt-4 grid gap-8 lg:grid-cols-[1fr_20rem]">
           <div>
-            <LeveyJenningsChart data={data} />
+            {data.results.length > 0 ? (
+              <LeveyJenningsChart data={data} />
+            ) : (
+              // A time axis needs at least one point to scale itself, so a lot
+              // with nothing recorded would otherwise draw an empty frame.
+              <p className="text-slate-400">
+                No results yet. Record one to start the chart for{' '}
+                <span className="font-mono">{data.lot_number}</span>.
+              </p>
+            )}
             <section className="mt-8">
               <h3 className="mb-2 font-semibold">Recent results</h3>
               <ResultsTable
@@ -107,15 +117,13 @@ export function LotDetail() {
                   <dd>{data.active ? 'Active' : 'Retired'}</dd>
                 </div>
               </dl>
-              {data.active && (
-                <button
-                  type="button"
-                  onClick={() => void handleRetire()}
-                  className="mt-3 rounded border border-slate-600 px-3 py-1.5 transition-colors hover:border-slate-400"
-                >
-                  Retire lot
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => void setActive(!data.active)}
+                className="mt-3 rounded border border-slate-600 px-3 py-1.5 transition-colors hover:border-slate-400"
+              >
+                {data.active ? 'Retire lot' : 'Reactivate lot'}
+              </button>
             </section>
             <StatsSummary data={data} />
             {data.active && <ResultEntryForm lotId={id} onCreated={() => void load()} />}

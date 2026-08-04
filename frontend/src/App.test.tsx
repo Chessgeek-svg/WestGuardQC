@@ -9,6 +9,7 @@ vi.mock('./api/client')
 describe('App', () => {
   beforeEach(() => {
     vi.mocked(client.getDashboard).mockResolvedValue([])
+    vi.mocked(client.listLots).mockResolvedValue([])
   })
 
   it('renders the header and the dashboard route', async () => {

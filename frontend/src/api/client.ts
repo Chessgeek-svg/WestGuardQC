@@ -1,6 +1,9 @@
 import type {
+  Analyte,
+  AnalyteCreate,
   LotResults,
   QCLot,
+  QCLotCreate,
   QCLotUpdate,
   QCResult,
   QCResultCreate,
@@ -79,4 +82,23 @@ export function voidResult(resultId: number, payload: QCResultVoid): Promise<QCR
 
 export function updateLot(lotId: number, payload: QCLotUpdate): Promise<QCLot> {
   return apiSend<QCLot>('PATCH', `/api/v1/qc-lots/${lotId}`, payload)
+}
+
+export function listAnalytes(): Promise<Analyte[]> {
+  return apiGet<Analyte[]>('/api/v1/analytes')
+}
+
+export function createAnalyte(payload: AnalyteCreate): Promise<Analyte> {
+  return apiPost<Analyte>('/api/v1/analytes', payload)
+}
+
+/** Lots, optionally filtered by state. The dashboard only ever shows active
+ *  lots, so `active: false` is how a retired lot is found again. */
+export function listLots(active?: boolean): Promise<QCLot[]> {
+  const query = active === undefined ? '' : `?active=${String(active)}`
+  return apiGet<QCLot[]>(`/api/v1/qc-lots${query}`)
+}
+
+export function createLot(payload: QCLotCreate): Promise<QCLot> {
+  return apiPost<QCLot>('/api/v1/qc-lots', payload)
 }

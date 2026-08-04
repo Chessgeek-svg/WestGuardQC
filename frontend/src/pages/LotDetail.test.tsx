@@ -90,4 +90,23 @@ describe('LotDetail', () => {
     expect(await screen.findByText(/retired/i)).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: /record a result/i })).not.toBeInTheDocument()
   })
+
+  it('prompts for a first result instead of drawing an empty chart', async () => {
+    vi.mocked(client.getLotResults).mockResolvedValue(makeBundle({ lot_id: 1, results: [] }))
+    renderDetail()
+    expect(await screen.findByText(/no results yet/i)).toBeInTheDocument()
+  })
+
+  it('reactivates a retired lot, so retiring is not a one-way door', async () => {
+    vi.mocked(client.updateLot).mockResolvedValue({} as never)
+    vi.mocked(client.getLotResults)
+      .mockResolvedValueOnce(makeBundle({ lot_id: 1, active: false }))
+      .mockResolvedValueOnce(makeBundle({ lot_id: 1, active: true }))
+    renderDetail()
+
+    fireEvent.click(await screen.findByRole('button', { name: /reactivate lot/i }))
+
+    await waitFor(() => expect(client.updateLot).toHaveBeenCalledWith(1, { active: true }))
+    expect(await screen.findByRole('heading', { name: /record a result/i })).toBeInTheDocument()
+  })
 })

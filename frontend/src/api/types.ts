@@ -70,3 +70,18 @@ export interface QCResultCreate {
   recorded_by: string
   recorded_at?: string
 }
+
+export interface AnalyteCreate {
+  name: string
+  unit: string
+}
+
+export interface QCLotCreate {
+  analyte_id: number
+  lot_number: string
+  manufacturer: string
+  level: string
+  target_mean: number
+  target_sd: number
+  expiration_date: string
+}

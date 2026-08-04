@@ -2,6 +2,7 @@ import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
 
 import { Dashboard } from './pages/Dashboard'
 import { LotDetail } from './pages/LotDetail'
+import { NewLot } from './pages/NewLot'
 
 function App() {
   return (
@@ -15,6 +16,8 @@ function App() {
         </header>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          {/* Ahead of the :lotId route, so "new" is not read as an id. */}
+          <Route path="/lots/new" element={<NewLot />} />
           <Route path="/lots/:lotId" element={<LotDetail />} />
         </Routes>
       </div>

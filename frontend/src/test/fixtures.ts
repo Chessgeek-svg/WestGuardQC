@@ -1,4 +1,32 @@
-import type { LotResults, QCResult } from '../api/types'
+import type { Analyte, LotResults, QCLot, QCResult } from '../api/types'
+
+export function makeAnalyte(overrides: Partial<Analyte> = {}): Analyte {
+  return {
+    id: 1,
+    name: 'Glucose',
+    unit: 'mg/dL',
+    created_at: '2026-07-08T08:00:00Z',
+    updated_at: '2026-07-08T08:00:00Z',
+    ...overrides,
+  }
+}
+
+export function makeLot(overrides: Partial<QCLot> = {}): QCLot {
+  return {
+    id: 1,
+    analyte_id: 1,
+    lot_number: 'GLU-1042',
+    manufacturer: 'BioRad',
+    level: 'Level 1',
+    target_mean: 100,
+    target_sd: 5,
+    expiration_date: '2027-01-01',
+    active: true,
+    created_at: '2026-07-08T08:00:00Z',
+    updated_at: '2026-07-08T08:00:00Z',
+    ...overrides,
+  }
+}
 
 export function makeResult(overrides: Partial<QCResult> = {}): QCResult {
   return {
