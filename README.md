@@ -10,7 +10,7 @@ When a technologist records a control value, WestGuardQC scores it against the l
 
 Labs run quality control material alongside patient samples. QC material is a manufactured sample with a known concentration, so if the analyzer reports the wrong number for it, you know the patient results from that run are suspect too. Each lot of QC material ships with a target mean and standard deviation from the manufacturer's package insert, usually refined against the lab's own accumulated data. Comparing what the lab actually observes to those targets is how you tell whether a method has drifted.
 
-A Levey-Jennings chart plots those control results over time, with horizontal lines at the mean and at ±1, 2, and 3 SD. Shifts, trends, and widening scatter are obvious on it in a way they never are in a column of numbers.
+A Levey-Jennings chart plots those control results over time, with horizontal lines at the mean and at ±1, 2, and 3 SD. Shifts, trends, and widening scatter are more obvious and interpretable visually than in a column of numbers.
 
 Westgard rules are the standard multi-rule system for turning that chart into an accept or reject decision. WestGuardQC implements the classic six:
 
@@ -108,7 +108,7 @@ sequenceDiagram
   API-->>T: 201 with status
 ```
 
-Nothing gets written until the rules have run. The service layer pulls the nine results recorded most recently before the new one, which is as far back as any rule reaches (10x needs the current value plus nine priors). Ordering keys on `recorded_at` with the row id breaking ties, so backdating an entry judges it against whatever actually came before it in time, not whatever happened to be typed in first.
+Nothing gets written until the rules have run. The service layer pulls the nine results recorded most recently before the new one that have not been voided, which is as far back as any rule reaches (10x needs the current value plus nine priors). Ordering keys on `recorded_at` with the row id breaking ties, so backdating an entry judges it against whatever actually came before it in time, not whatever happened to be typed in first.
 
 Backdating also invalidates every result after the insertion point, because those were scored against a history that has just changed. So the service walks forward from the new result and re-scores the rest of the run against a rolling window.
 
