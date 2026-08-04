@@ -58,4 +58,24 @@ describe('ResultsTable', () => {
     fireEvent.click(buttons[0])
     expect(onVoid).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }))
   })
+
+  it('puts the void form in the row under the result being voided', () => {
+    render(
+      <ResultsTable
+        results={[
+          makeResult({ id: 1, value: 101, recorded_at: '2026-07-08T08:00:00Z' }),
+          makeResult({ id: 2, value: 102, recorded_at: '2026-07-08T09:00:00Z' }),
+          makeResult({ id: 3, value: 103, recorded_at: '2026-07-08T10:00:00Z' }),
+        ]}
+        onVoid={vi.fn()}
+        voidingId={2}
+        voidForm={<p>void form</p>}
+      />,
+    )
+    // Newest first, so id 2 is the middle row. The form belongs immediately
+    // after it, not at the foot of the table where it would be off screen.
+    const rows = screen.getAllByRole('row').slice(1)
+    expect(within(rows[1]).getByText('102')).toBeInTheDocument()
+    expect(within(rows[2]).getByText('void form')).toBeInTheDocument()
+  })
 })

@@ -71,14 +71,20 @@ export function LotDetail() {
             <LeveyJenningsChart data={data} />
             <section className="mt-8">
               <h3 className="mb-2 font-semibold">Recent results</h3>
-              <ResultsTable results={data.results} onVoid={setVoiding} />
-              {voiding && (
-                <VoidResultForm
-                  result={voiding}
-                  onSubmit={handleVoid}
-                  onCancel={() => setVoiding(null)}
-                />
-              )}
+              <ResultsTable
+                results={data.results}
+                onVoid={setVoiding}
+                voidingId={voiding?.id ?? null}
+                voidForm={
+                  voiding && (
+                    <VoidResultForm
+                      result={voiding}
+                      onSubmit={handleVoid}
+                      onCancel={() => setVoiding(null)}
+                    />
+                  )
+                }
+              />
             </section>
           </div>
           <div className="space-y-8">
